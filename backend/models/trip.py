@@ -13,6 +13,7 @@ class Trip(Base):
     budget = Column(Float, nullable=False)
     category = Column(String, nullable=False)
     daily_budget = Column(Float, nullable=False)
+    ai_recommendation = Column(String, nullable=True)
 
 
 class TripBase(BaseModel):
@@ -21,6 +22,7 @@ class TripBase(BaseModel):
     budget: float = Field(..., gt=0)
     category: str = Field(..., min_length=1)
     daily_budget: float | None = Field(default=None, gt=0)
+    ai_recommendation: str | None = None
 
 
 class TripCreate(TripBase):
@@ -33,6 +35,7 @@ class TripUpdate(BaseModel):
     budget: float | None = Field(default=None, gt=0)
     category: str | None = Field(default=None, min_length=1)
     daily_budget: float | None = Field(default=None, gt=0)
+    ai_recommendation: str | None = None
 
 
 class TripOut(TripBase):

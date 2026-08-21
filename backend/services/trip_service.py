@@ -1,4 +1,5 @@
 from models.trip import Trip, TripCreate, TripOut, TripUpdate
+from services import bedrock_service
 
 
 def get_trip_category(budget):
@@ -90,11 +91,35 @@ def delete_trip(db, trip_id: int) -> bool:
     db.commit()
     return True
 
+
+def generate_trip_recommendation(db, trip_id: int, force_refresh: bool = False) -> TripOut | None:
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    if trip is None:
+        return None
+
+    # Check cache first if available and not forcing refresh
+    if trip.ai_recommendation and not force_refresh:
+        return serialize_trip(trip)
+
+    # Call AWS Bedrock service for generation
+    recommendation = bedrock_service.generate_recommendation(
+        destination=trip.destination,
+        days=trip.days,
+        budget=trip.budget,
+        category=trip.category,
+    )
+
+    trip.ai_recommendation = recommendation
+    db.commit()
+    db.refresh(trip)
+    return serialize_trip(trip)
+
+
 def get_recommended_places():
     return [
         "Eiffel Tower, Paris, France",
         "Great Wall of China, China",
         "Machu Picchu, Peru",
         "Santorini, Greece",
-        "Grand Canyon, USA"
+        "Grand Canyon, USA",
     ]

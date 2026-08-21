@@ -4,7 +4,15 @@ from fastapi import Depends, FastAPI, HTTPException
 
 from database import get_db, init_db
 from models.trip import TripCreate, TripUpdate
-from services.trip_service import create_trip, delete_trip, read_trip, read_trips, update_trip
+from services.trip_service import (
+    create_trip,
+    delete_trip,
+    generate_trip_recommendation,
+    read_trip,
+    read_trips,
+    update_trip,
+)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -69,3 +77,19 @@ def delete_trip_route(trip_id: int, db=Depends(get_db)):
     if not deleted:
         raise HTTPException(status_code=404, detail="Trip not found")
     return {"message": "Trip deleted successfully"}
+
+
+@app.post("/trips/{trip_id}/generate")
+@app.get("/trips/{trip_id}/generate")
+def generate_recommendation_route(trip_id: int, force_refresh: bool = False, db=Depends(get_db)):
+    # Membuat atau mengembalikan rekomendasi perjalanan berdasarkan ID
+    try:
+        trip = generate_trip_recommendation(db, trip_id, force_refresh=force_refresh)
+        if trip is None:
+            raise HTTPException(status_code=404, detail="Trip not found")
+        return trip
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate recommendation: {str(e)}")
+
