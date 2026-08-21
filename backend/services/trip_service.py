@@ -1,3 +1,6 @@
+from models.trip import Trip, TripCreate, TripOut, TripUpdate
+
+
 def get_trip_category(budget):
     if budget < 1000:
         return "Backpacker"
@@ -18,6 +21,74 @@ def get_travel_season(month):
 
 def calculate_daily_budget(budget, days):
     return budget / days
+
+
+def serialize_trip(trip: Trip) -> TripOut:
+    return TripOut.model_validate(trip)
+
+
+def create_trip(db, trip: TripCreate) -> TripOut:
+    daily_budget = trip.daily_budget
+    if daily_budget is None:
+        daily_budget = trip.budget / trip.days
+
+    db_trip = Trip(
+        destination=trip.destination,
+        days=trip.days,
+        budget=trip.budget,
+        category=trip.category,
+        daily_budget=daily_budget,
+    )
+    db.add(db_trip)
+    db.commit()
+    db.refresh(db_trip)
+    return serialize_trip(db_trip)
+
+
+def read_trips(db):
+    trips = db.query(Trip).order_by(Trip.id.asc()).all()
+    return [serialize_trip(trip) for trip in trips]
+
+
+def read_trip(db, trip_id: int) -> TripOut | None:
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    if trip is None:
+        return None
+    return serialize_trip(trip)
+
+
+def update_trip(db, trip_id: int, trip_update: TripUpdate) -> TripOut | None:
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    if trip is None:
+        return None
+
+    if hasattr(trip_update, "model_dump"):
+        update_data = trip_update.model_dump(exclude_unset=True)
+    else:
+        update_data = trip_update.dict(exclude_unset=True)
+
+    if "days" in update_data or "budget" in update_data or "daily_budget" in update_data:
+        next_days = update_data.get("days", trip.days)
+        next_budget = update_data.get("budget", trip.budget)
+        if update_data.get("daily_budget") is None and ("days" in update_data or "budget" in update_data):
+            update_data["daily_budget"] = next_budget / next_days
+
+    for field, value in update_data.items():
+        setattr(trip, field, value)
+
+    db.commit()
+    db.refresh(trip)
+    return serialize_trip(trip)
+
+
+def delete_trip(db, trip_id: int) -> bool:
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    if trip is None:
+        return False
+
+    db.delete(trip)
+    db.commit()
+    return True
 
 def get_recommended_places():
     return [
