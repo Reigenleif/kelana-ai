@@ -1,19 +1,26 @@
+from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import Column, Float, Integer, String
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy.orm import relationship
 
 from database import Base
+from models.user import UserOut
 
 
 class Trip(Base):
     __tablename__ = "trips"
 
     id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     destination = Column(String, nullable=False)
     days = Column(Integer, nullable=False)
     budget = Column(Float, nullable=False)
     category = Column(String, nullable=False)
     daily_budget = Column(Float, nullable=False)
     ai_recommendation = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+    owner = relationship("User", foreign_keys=[user_id])
 
 
 class TripBase(BaseModel):
@@ -40,4 +47,6 @@ class TripUpdate(BaseModel):
 
 class TripOut(TripBase):
     id: int
+    user_id: int
+    created_at: datetime | None = None
     model_config = ConfigDict(from_attributes=True)

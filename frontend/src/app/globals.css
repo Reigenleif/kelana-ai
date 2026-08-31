@@ -1,0 +1,139 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --primary: #e11d48;
+    --primary-hover: #be123c;
+    --primary-focus: #f43f5e;
+    --primary-light: rgba(225, 29, 72, 0.12);
+    --primary-glow: rgba(225, 29, 72, 0.35);
+    
+    --bg-main: #0b0f17;
+    --bg-card: #121824;
+    --bg-card-hover: #182030;
+    --bg-glass: rgba(18, 24, 36, 0.75);
+    
+    --border-color: rgba(255, 255, 255, 0.08);
+    --border-glow: rgba(225, 29, 72, 0.4);
+    
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+  }
+
+  body {
+    background-color: #090d14;
+    color: #f1f5f9;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0f17;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #273142;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #e11d48;
+}
+
+/* Glassmorphism & Red Glow Utility */
+.glass-panel {
+  background: rgba(18, 24, 36, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-glow {
+  background: rgba(18, 24, 36, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(225, 29, 72, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(225, 29, 72, 0.12);
+}
+
+.red-gradient-text {
+  background: linear-gradient(135deg, #fb7185 0%, #e11d48 50%, #be123c 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.red-gradient-btn {
+  background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+  transition: all 0.2s ease-in-out;
+}
+
+.red-gradient-btn:hover {
+  background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  box-shadow: 0 0 20px rgba(225, 29, 72, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Markdown styling inside AI recommendation */
+.markdown-body h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fb7185;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(225, 29, 72, 0.2);
+  padding-bottom: 0.5rem;
+}
+
+.markdown-body h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #f43f5e;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.markdown-body h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fda4af;
+  margin-top: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.markdown-body p {
+  color: #cbd5e1;
+  line-height: 1.65;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-body ul, .markdown-body ol {
+  padding-left: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: #e2e8f0;
+}
+
+.markdown-body li {
+  margin-bottom: 0.35rem;
+  line-height: 1.5;
+}
+
+.markdown-body strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.markdown-body blockquote {
+  border-left: 3px solid #e11d48;
+  padding-left: 1rem;
+  font-style: italic;
+  color: #94a3b8;
+  margin: 0.75rem 0;
+}

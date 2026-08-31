@@ -1,8 +1,9 @@
 fastapi
 uvicorn
 pydantic
-psycopg2
+psycopg2-binary
 sqlalchemy
 python-dotenv
-psycopg2-binary
 boto3
+PyJWT
+bcrypt

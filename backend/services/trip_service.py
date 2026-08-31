@@ -1,3 +1,4 @@
+from datetime import datetime
 from models.trip import Trip, TripCreate, TripOut, TripUpdate
 from services import bedrock_service
 
@@ -28,17 +29,19 @@ def serialize_trip(trip: Trip) -> TripOut:
     return TripOut.model_validate(trip)
 
 
-def create_trip(db, trip: TripCreate) -> TripOut:
+def create_trip(db, trip: TripCreate, user_id: int) -> TripOut:
     daily_budget = trip.daily_budget
     if daily_budget is None:
         daily_budget = trip.budget / trip.days
 
     db_trip = Trip(
+        user_id=user_id,
         destination=trip.destination,
         days=trip.days,
         budget=trip.budget,
         category=trip.category,
         daily_budget=daily_budget,
+        created_at=datetime.utcnow(),
     )
     db.add(db_trip)
     db.commit()
@@ -46,20 +49,20 @@ def create_trip(db, trip: TripCreate) -> TripOut:
     return serialize_trip(db_trip)
 
 
-def read_trips(db):
-    trips = db.query(Trip).order_by(Trip.id.asc()).all()
+def read_trips(db, user_id: int) -> list[TripOut]:
+    trips = db.query(Trip).filter(Trip.user_id == user_id).order_by(Trip.id.desc()).all()
     return [serialize_trip(trip) for trip in trips]
 
 
-def read_trip(db, trip_id: int) -> TripOut | None:
-    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+def read_trip(db, trip_id: int, user_id: int) -> TripOut | None:
+    trip = db.query(Trip).filter(Trip.id == trip_id, Trip.user_id == user_id).first()
     if trip is None:
         return None
     return serialize_trip(trip)
 
 
-def update_trip(db, trip_id: int, trip_update: TripUpdate) -> TripOut | None:
-    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+def update_trip(db, trip_id: int, trip_update: TripUpdate, user_id: int) -> TripOut | None:
+    trip = db.query(Trip).filter(Trip.id == trip_id, Trip.user_id == user_id).first()
     if trip is None:
         return None
 
@@ -82,8 +85,8 @@ def update_trip(db, trip_id: int, trip_update: TripUpdate) -> TripOut | None:
     return serialize_trip(trip)
 
 
-def delete_trip(db, trip_id: int) -> bool:
-    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+def delete_trip(db, trip_id: int, user_id: int) -> bool:
+    trip = db.query(Trip).filter(Trip.id == trip_id, Trip.user_id == user_id).first()
     if trip is None:
         return False
 
@@ -92,8 +95,8 @@ def delete_trip(db, trip_id: int) -> bool:
     return True
 
 
-def generate_trip_recommendation(db, trip_id: int, force_refresh: bool = False) -> TripOut | None:
-    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+def generate_trip_recommendation(db, trip_id: int, user_id: int, force_refresh: bool = False) -> TripOut | None:
+    trip = db.query(Trip).filter(Trip.id == trip_id, Trip.user_id == user_id).first()
     if trip is None:
         return None
 
