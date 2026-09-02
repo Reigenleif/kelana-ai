@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
-import { MessageSquare, Send, Sparkles, Plus, RefreshCw, Compass, Bot, User, ArrowLeft } from 'lucide-react';
+import { MessageSquare, Send, Sparkles, Plus, RefreshCw, Compass, Bot, User, Database, BookOpen } from 'lucide-react';
 import { chatService, authService } from '@/service';
 
 export default function AIChatPage() {
@@ -116,7 +116,7 @@ export default function AIChatPage() {
 
   const icebreakers = [
     "Recommend top hidden gems in Kyoto",
-    "What is a realistic 5-day budget for Bali?",
+    "What is the daily budget guide for Bali?",
     "Plan a weekend getaway itinerary in the Swiss Alps",
   ];
 
@@ -132,7 +132,7 @@ export default function AIChatPage() {
             </div>
             <div>
               <h2 className="font-extrabold text-sm text-white">AI Travel Chat</h2>
-              <p className="text-[10px] text-slate-400">Assistant Sessions</p>
+              <p className="text-[10px] text-slate-400">RAG-Powered Assistant</p>
             </div>
           </div>
 
@@ -196,19 +196,20 @@ export default function AIChatPage() {
             <div>
               <div className="text-sm font-bold text-white flex items-center gap-2">
                 <span>Kelana AI Travel Assistant</span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 border border-rose-500/40 text-rose-300">
-                  RAG Ready
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 border border-rose-500/40 text-rose-300 inline-flex items-center gap-1">
+                  <Database className="w-3 h-3 text-rose-400" />
+                  <span>RAG Active • S3 Knowledge Base</span>
                 </span>
               </div>
               <div className="text-[11px] text-slate-400">
-                Powered by AWS Bedrock • Ready to plan your dream trips
+                Grounded with verified travel guides & documents in Amazon S3
               </div>
             </div>
           </div>
 
           <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300 text-xs">
-            <Sparkles className="w-3.5 h-3.5 text-rose-400" />
-            <span>AI Travel Assistant</span>
+            <BookOpen className="w-3.5 h-3.5 text-rose-400" />
+            <span>Bedrock Knowledge Base</span>
           </div>
         </div>
 
@@ -264,7 +265,7 @@ export default function AIChatPage() {
                 <span className="inline-block w-2 h-2 rounded-full bg-rose-500 animate-bounce" />
                 <span className="inline-block w-2 h-2 rounded-full bg-rose-500 animate-bounce [animation-delay:0.2s]" />
                 <span className="inline-block w-2 h-2 rounded-full bg-rose-500 animate-bounce [animation-delay:0.4s]" />
-                <span className="ml-1 text-slate-400">Kelana AI is thinking...</span>
+                <span className="ml-1 text-slate-400">Retrieving S3 knowledge & formulating answer...</span>
               </div>
             </div>
           )}
