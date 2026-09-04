@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
-import { MessageSquare, Send, Sparkles, Plus, RefreshCw, Compass, Bot, User, Database, BookOpen } from 'lucide-react';
+import { MessageSquare, Send, Sparkles, Plus, RefreshCw, Compass, Bot, User } from 'lucide-react';
 import { chatService, authService } from '@/service';
 
 export default function AIChatPage() {
@@ -15,10 +15,22 @@ export default function AIChatPage() {
   const [messageInput, setMessageInput] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const selectConversation = async (conv) => {
+    setActiveConversation(conv);
+    setStreamingText('');
+    try {
+      const msgs = await chatService.getMessages(conv.id);
+      setMessages(msgs);
+    } catch (err) {
+      console.error('Error fetching messages:', err);
+    }
   };
 
   const loadData = async () => {
@@ -52,17 +64,7 @@ export default function AIChatPage() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, sending]);
-
-  const selectConversation = async (conv) => {
-    setActiveConversation(conv);
-    try {
-      const msgs = await chatService.getMessages(conv.id);
-      setMessages(msgs);
-    } catch (err) {
-      console.error('Error fetching messages:', err);
-    }
-  };
+  }, [messages, streamingText, sending]);
 
   const handleNewConversation = async () => {
     try {
@@ -76,16 +78,29 @@ export default function AIChatPage() {
     }
   };
 
+  const formatMessageTime = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return '';
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return '';
+    }
+  };
+
   const handleSendMessage = async (e) => {
     e?.preventDefault();
     if (!messageInput.trim() || !activeConversation || sending) return;
 
     const textToSend = messageInput.trim();
     setMessageInput('');
+    setStreamingText('');
 
     // Optimistic user message append
+    const tempUserId = `temp-${Date.now()}`;
     const tempUserMsg = {
-      id: Date.now(),
+      id: tempUserId,
       conversation_id: activeConversation.id,
       sender: 'user',
       text: textToSend,
@@ -94,31 +109,54 @@ export default function AIChatPage() {
     setMessages((prev) => [...prev, tempUserMsg]);
     setSending(true);
 
-    try {
-      const returnedMsgs = await chatService.sendMessage(activeConversation.id, textToSend);
-      // Update with server returned messages
-      setMessages((prev) => {
-        const withoutTemp = prev.filter((m) => m.id !== tempUserMsg.id);
-        return [...withoutTemp, ...returnedMsgs];
-      });
+    let accumulatedText = '';
 
-      // Update last message in conversation list
-      const latestAi = returnedMsgs[returnedMsgs.length - 1];
-      setConversations((prev) =>
-        prev.map((c) => (c.id === activeConversation.id ? { ...c, last_message: latestAi } : c))
-      );
+    try {
+      await chatService.streamMessage(activeConversation.id, textToSend, {
+        onUserMessage: (persistedUserMsg) => {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === tempUserId ? persistedUserMsg : m))
+          );
+        },
+        onTitle: (inferredTitle) => {
+          setActiveConversation((prev) => (prev ? { ...prev, title: inferredTitle } : prev));
+          setConversations((prev) =>
+            prev.map((c) => (c.id === activeConversation.id ? { ...c, title: inferredTitle } : c))
+          );
+        },
+        onChunk: (chunk) => {
+          accumulatedText += chunk;
+          setStreamingText(accumulatedText);
+        },
+        onDone: (savedAiMsg, finalTitle) => {
+          setStreamingText('');
+          setMessages((prev) => {
+            const filtered = prev.filter((m) => m.id !== savedAiMsg.id);
+            return [...filtered, savedAiMsg];
+          });
+          const targetTitle = finalTitle || activeConversation?.title;
+          if (targetTitle) {
+            setActiveConversation((prev) => (prev ? { ...prev, title: targetTitle } : prev));
+            setConversations((prev) =>
+              prev.map((c) =>
+                c.id === activeConversation.id
+                  ? { ...c, title: targetTitle, last_message: savedAiMsg }
+                  : c
+              )
+            );
+          }
+        },
+        onError: (errDetail) => {
+          alert(errDetail || 'Error streaming AI response');
+        },
+      });
     } catch (err) {
-      alert(err.response?.data?.detail || 'Failed to send message to AI assistant');
+      console.error('Error streaming message:', err);
     } finally {
       setSending(false);
+      setStreamingText('');
     }
   };
-
-  const icebreakers = [
-    "Recommend top hidden gems in Kyoto",
-    "What is the daily budget guide for Bali?",
-    "Plan a weekend getaway itinerary in the Swiss Alps",
-  ];
 
   return (
     <div className="h-[calc(100vh-4rem)] bg-[#090d14] text-slate-100 flex flex-col md:flex-row overflow-hidden max-w-7xl mx-auto md:p-4 md:gap-4">
@@ -130,10 +168,7 @@ export default function AIChatPage() {
             <div className="p-2 rounded-xl bg-rose-600/15 text-rose-400">
               <Bot className="w-4 h-4" />
             </div>
-            <div>
-              <h2 className="font-extrabold text-sm text-white">AI Travel Chat</h2>
-              <p className="text-[10px] text-slate-400">RAG-Powered Assistant</p>
-            </div>
+            <h2 className="font-extrabold text-sm text-white">AI Travel Chat</h2>
           </div>
 
           <button
@@ -188,29 +223,13 @@ export default function AIChatPage() {
       {/* Right Main Chat Window */}
       <div className="flex-1 bg-slate-900/80 md:border border-slate-800 md:rounded-3xl flex flex-col h-3/4 md:h-full overflow-hidden backdrop-blur-xl">
         {/* Chat Header */}
-        <div className="px-6 py-3.5 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-600 to-red-500 flex items-center justify-center text-white shadow-md shadow-rose-600/30">
-              <Bot className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="text-sm font-bold text-white flex items-center gap-2">
-                <span>Kelana AI Travel Assistant</span>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 border border-rose-500/40 text-rose-300 inline-flex items-center gap-1">
-                  <Database className="w-3 h-3 text-rose-400" />
-                  <span>RAG Active • S3 Knowledge Base</span>
-                </span>
-              </div>
-              <div className="text-[11px] text-slate-400">
-                Grounded with verified travel guides & documents in Amazon S3
-              </div>
-            </div>
+        <div className="px-6 py-4 border-b border-slate-800 bg-slate-950/40 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-rose-600 to-red-500 flex items-center justify-center text-white shadow-md shadow-rose-600/30">
+            <Bot className="w-4 h-4" />
           </div>
-
-          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700 text-slate-300 text-xs">
-            <BookOpen className="w-3.5 h-3.5 text-rose-400" />
-            <span>Bedrock Knowledge Base</span>
-          </div>
+          <h2 className="text-sm font-bold text-white">
+            {activeConversation?.title || 'Kelana AI Travel Assistant'}
+          </h2>
         </div>
 
         {/* Messages Stream */}
@@ -242,8 +261,8 @@ export default function AIChatPage() {
                       <ReactMarkdown>{msg.text}</ReactMarkdown>
                     )}
                   </div>
-                  <span className="text-[10px] text-slate-400 mt-1 px-1">
-                    {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  <span className="text-[10px] text-slate-400 mt-1 px-1.5 font-medium">
+                    {formatMessageTime(msg.created_at)}
                   </span>
                 </div>
 
@@ -256,38 +275,42 @@ export default function AIChatPage() {
             );
           })}
 
-          {sending && (
+          {/* Streaming chunk preview with cursor */}
+          {streamingText && (
             <div className="flex items-start gap-3 justify-start">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-600 to-red-500 flex items-center justify-center text-white shrink-0 shadow-sm mt-1">
                 <Bot className="w-4 h-4" />
               </div>
-              <div className="px-4 py-3 rounded-2xl rounded-bl-none bg-slate-800/90 border border-slate-700/60 flex items-center gap-2 text-xs text-slate-400">
-                <span className="inline-block w-2 h-2 rounded-full bg-rose-500 animate-bounce" />
-                <span className="inline-block w-2 h-2 rounded-full bg-rose-500 animate-bounce [animation-delay:0.2s]" />
-                <span className="inline-block w-2 h-2 rounded-full bg-rose-500 animate-bounce [animation-delay:0.4s]" />
-                <span className="ml-1 text-slate-400">Retrieving S3 knowledge & formulating answer...</span>
+              <div className="max-w-[85%] sm:max-w-xl flex flex-col items-start">
+                <div className="px-4 py-3 rounded-2xl rounded-bl-none bg-slate-800/90 border border-slate-700/60 text-xs sm:text-sm leading-relaxed markdown-body shadow-md">
+                  <ReactMarkdown>{streamingText}</ReactMarkdown>
+                  <span className="inline-block w-1.5 h-3.5 ml-1 bg-rose-500 animate-pulse align-middle" />
+                </div>
+                <span className="text-[10px] text-rose-400 mt-1 px-1 flex items-center gap-1.5 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping inline-block" />
+                  <span>Streaming live • {formatMessageTime(new Date().toISOString())}</span>
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Loading indicator spinner when requesting */}
+          {sending && !streamingText && (
+            <div className="flex items-start gap-3 justify-start">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-rose-600 to-red-500 flex items-center justify-center text-white shrink-0 shadow-sm mt-1">
+                <Bot className="w-4 h-4" />
+              </div>
+              <div className="flex flex-col items-start">
+                <div className="px-4 py-3 rounded-2xl rounded-bl-none bg-slate-800/90 border border-slate-700/60 flex items-center gap-1.5 shadow-md">
+                  <span className="inline-block w-2 h-2 rounded-full bg-rose-500 animate-bounce" />
+                  <span className="inline-block w-2 h-2 rounded-full bg-rose-500 animate-bounce [animation-delay:0.2s]" />
+                  <span className="inline-block w-2 h-2 rounded-full bg-rose-500 animate-bounce [animation-delay:0.4s]" />
+                </div>
               </div>
             </div>
           )}
 
           <div ref={messagesEndRef} />
-        </div>
-
-        {/* Icebreaker Prompts */}
-        <div className="px-4 py-2 bg-slate-950/60 border-t border-slate-800 flex items-center gap-2 overflow-x-auto scrollbar-none">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
-            Suggested:
-          </span>
-          {icebreakers.map((prompt, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setMessageInput(prompt)}
-              className="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 hover:border-rose-500/40 text-[11px] text-slate-300 hover:text-white whitespace-nowrap transition-colors"
-            >
-              {prompt}
-            </button>
-          ))}
         </div>
 
         {/* Input Bar */}

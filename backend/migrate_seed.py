@@ -1,10 +1,11 @@
 from datetime import datetime
-from sqlalchemy import text
+
 from database import Base, SessionLocal, engine
 from models.chat import Conversation, Message
 from models.trip import Trip
 from models.user import User
 from services.auth_service import hash_password
+from sqlalchemy import text
 
 
 def run_migration_and_seed():
@@ -18,7 +19,7 @@ def run_migration_and_seed():
                 DO $$
                 BEGIN
                     IF EXISTS (
-                        SELECT 1 FROM information_schema.columns 
+                        SELECT 1 FROM information_schema.columns
                         WHERE table_name='conversations' AND column_name='user1_id'
                     ) THEN
                         DROP TABLE IF EXISTS messages CASCADE;
@@ -42,14 +43,14 @@ def run_migration_and_seed():
                 DO $$
                 BEGIN
                     IF NOT EXISTS (
-                        SELECT 1 FROM information_schema.columns 
+                        SELECT 1 FROM information_schema.columns
                         WHERE table_name='trips' AND column_name='user_id'
                     ) THEN
                         ALTER TABLE trips ADD COLUMN user_id INTEGER REFERENCES users(id) ON DELETE CASCADE;
                     END IF;
 
                     IF NOT EXISTS (
-                        SELECT 1 FROM information_schema.columns 
+                        SELECT 1 FROM information_schema.columns
                         WHERE table_name='trips' AND column_name='created_at'
                     ) THEN
                         ALTER TABLE trips ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;

@@ -8,20 +8,6 @@ export default function TripCard({ trip, onDeleteTrip }) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const getCategoryBadgeClass = (cat) => {
-    switch (cat?.toLowerCase()) {
-      case 'luxury':
-        return 'bg-amber-500/15 text-amber-300 border-amber-500/30';
-      case 'backpacker':
-        return 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
-      case 'adventure':
-        return 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30';
-      case 'culture & food':
-        return 'bg-rose-500/15 text-rose-300 border-rose-500/30';
-      default:
-        return 'bg-slate-700/40 text-slate-300 border-slate-600/40';
-    }
-  };
 
   const handleConfirmDelete = async (e) => {
     e.preventDefault();
@@ -40,22 +26,13 @@ export default function TripCard({ trip, onDeleteTrip }) {
     <div className="group relative rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-rose-500/40 p-5 shadow-lg transition-all duration-300 hover:shadow-xl hover:shadow-rose-950/20 flex flex-col justify-between">
       <div>
         {/* Card Header */}
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400 group-hover:bg-rose-500 group-hover:text-white transition-colors">
-              <MapPin className="w-4 h-4" />
-            </div>
-            <h3 className="font-bold text-base text-white group-hover:text-rose-300 transition-colors">
-              {trip.destination}
-            </h3>
+        <div className="flex items-center gap-2 mb-3">
+          <div className="p-2 rounded-xl bg-rose-500/10 text-rose-400 group-hover:bg-rose-500 group-hover:text-white transition-colors">
+            <MapPin className="w-4 h-4" />
           </div>
-          <span
-            className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getCategoryBadgeClass(
-              trip.category
-            )}`}
-          >
-            {trip.category}
-          </span>
+          <h3 className="font-bold text-base text-white group-hover:text-rose-300 transition-colors">
+            {trip.destination}
+          </h3>
         </div>
 
         {/* Details stats */}
@@ -84,19 +61,6 @@ export default function TripCard({ trip, onDeleteTrip }) {
             </div>
           </div>
         </div>
-
-        {/* AI Itinerary Preview Snippet if generated */}
-        {trip.ai_recommendation ? (
-          <div className="mb-4 p-2.5 rounded-lg bg-rose-950/20 border border-rose-900/30 text-xs text-rose-300/90 flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-            <span className="truncate">AI Itinerary & Schedule ready to view</span>
-          </div>
-        ) : (
-          <div className="mb-4 p-2.5 rounded-lg bg-slate-950/40 border border-slate-800/60 text-xs text-slate-400 flex items-center gap-2">
-            <Sparkles className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-            <span>Itinerary not generated yet</span>
-          </div>
-        )}
       </div>
 
       {/* Card Actions */}

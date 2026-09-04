@@ -1,15 +1,15 @@
 'use client';
 
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import AIRecommendationView from '@/components/AIRecommendationView';
 import { tripService, authService } from '@/service';
 import { AlertCircle } from 'lucide-react';
 
-export default function RecommendationPage({ params }) {
+export default function RecommendationPage() {
   const router = useRouter();
-  const resolvedParams = use ? use(params) : useParams();
-  const tripId = resolvedParams?.id;
+  const params = useParams();
+  const tripId = params?.id;
 
   const [trip, setTrip] = useState(null);
   const [loading, setLoading] = useState(true);

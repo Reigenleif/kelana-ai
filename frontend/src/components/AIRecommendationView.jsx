@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
-import { ArrowLeft, Sparkles, RefreshCw, MapPin, Calendar, DollarSign, Tag, AlertCircle, Trash2, Check, X } from 'lucide-react';
+import { ArrowLeft, Sparkles, RefreshCw, MapPin, Calendar, DollarSign, AlertCircle, Trash2, Check, X } from 'lucide-react';
 import { tripService } from '@/service';
 
 export default function AIRecommendationView({ initialTrip }) {
@@ -119,10 +119,6 @@ export default function AIRecommendationView({ initialTrip }) {
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
               <DollarSign className="w-3.5 h-3.5 text-rose-400" />
               <span>${trip?.budget?.toLocaleString()} Total</span>
-            </span>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 text-rose-300 border border-rose-500/30">
-              <Tag className="w-3.5 h-3.5 text-rose-400" />
-              <span>{trip?.category} Style</span>
             </span>
           </div>
         </div>

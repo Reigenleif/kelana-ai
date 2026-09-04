@@ -1,17 +1,21 @@
-import os
 from datetime import datetime, timedelta
+
 import bcrypt
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
+try:
+    from config import settings
+except ImportError:
+    from backend.config import settings
 from database import get_db
-from models.user import Token, TokenData, User, UserCreate, UserLogin, UserOut
+from models.user import Token, User, UserCreate, UserLogin, UserOut
 
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "kelana-ai-super-secret-jwt-key-2026-secure")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
+SECRET_KEY = settings.jwt_secret_key
+ALGORITHM = settings.jwt_algorithm
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 
 security = HTTPBearer(auto_error=False)
 

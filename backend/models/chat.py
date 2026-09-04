@@ -1,9 +1,9 @@
 from datetime import datetime
+
+from database import Base
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
-
-from database import Base
 
 
 class Conversation(Base):

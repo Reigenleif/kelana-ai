@@ -1,10 +1,9 @@
 from datetime import datetime
+
+from database import Base
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
-
-from database import Base
-from models.user import UserOut
 
 
 class Trip(Base):

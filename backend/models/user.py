@@ -1,8 +1,8 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import Column, DateTime, Integer, String
 
 from database import Base
+from pydantic import BaseModel, ConfigDict, Field
+from sqlalchemy import Column, DateTime, Integer, String
 
 
 class User(Base):

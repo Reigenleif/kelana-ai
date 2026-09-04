@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from models.trip import Trip, TripCreate, TripOut, TripUpdate
 from services import bedrock_service
 
